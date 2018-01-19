@@ -199,9 +199,25 @@ class Engine {
     }
 
     isPlayerDead() {
-        // TODO: fix this function!
-        return false;
+
+        var stoopid = (enemy) => {
+            if (enemy.x === this.player.x && enemy.y === -ENEMY_HEIGHT)   {
+               console.log("enemy hit");
+                return true;
+            }
+            
+        };
+        return this.enemies.some(stoopid);
+
     }
+        //console.log("Player position y: " + this.player.y)
+        //
+       
+
+
+        // TODO: fix this function!
+        
+    
 }
 
 
