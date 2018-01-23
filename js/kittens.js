@@ -68,17 +68,18 @@ class Enemy extends Entity{
         this.y = xPos;
         this.sprite = images['note.png'];
         this.score = score;
+        
 
-         var modifier = (score > 25000) ? 1.9 : 1;
-         (score > 50000) ? 1.8: 1;
-         (score > 30000) ? 1.75: 1;
-         (score > 20000) ? 1.5: 1;
-         (score > 10000) ? 1.25: 1;
-         (score > 5000) ? 1 : 1;
+         var modifier = (score > 120000) ? 1.9 : 1;
+         (score > 100000) ? 1.8: 1;
+         (score > 50000) ? 1.15: 1;
+         (score > 40000) ? 1.10: 1;
+         (score > 30000) ? 1.05: 1;
+         (score > 20000) ? 1 : 1;
 
          // Each enemy should have a different speed
-         this.speed = (Math.random() / 3 + .15) * modifier;
-         console.log(this.speed)
+         this.speed = (Math.random() / 2 + .15) * modifier;
+         //console.log(this.speed)
     }
 
     update(timeDiff) {
@@ -148,6 +149,7 @@ class Engine {
         // Setup the player
         this.player = new Player();
         this.currentLevel = 1;
+        this.pointsInLevel = this.currentLevel * 10000;
         // Setup enemies, making sure there are always three
         this.setupEnemies();
         this.setupCondiments();
@@ -280,6 +282,8 @@ class Engine {
         
     }
 
+
+
     // This method kicks off the game
     start() {
         this.isReset = false
@@ -331,6 +335,39 @@ class Engine {
         this.gameLoop();
     }
 
+      nextLevel() {
+          this.isDead === false;
+          this.isReset === false
+          this.isPaused === false;
+          this.pauseMusic();
+        //   sounds["levelEnd.mp3"].currentTime = 0;
+        //     sounds["levelEnd.mp3"].play();
+        //   sounds["levelEnd.mp3"].pause();
+          
+          this.currentLevel += 1
+          
+          if (5 >= this.currentLevel && this.currentLevel >= 4) {
+              MAX_ENEMIES += 1
+          }
+          //on levels 2 and 3, the speed divider reduces by 1(meaning cats can go faster)
+          if (3 >= this.currentLevel && this.currentLevel >= 2) {
+              MAX_ENEMIES += 0
+          }
+
+          this.pointsInLevel = this.currentLevel * 10000 + 10000;
+          console.log("pointsInLevel:" + pointsInLevel)
+          console.log("next level starting!")
+          this.enemies = [];
+          this.lives = 3
+          this.condiments = [];
+          //starts 
+          this.start();
+      }
+
+
+
+
+
     /*
     This is the core of the game engine. The `gameLoop` function gets called ~60 times per second
     During each execution of the function, we will update the positions of all game entities
@@ -363,6 +400,12 @@ class Engine {
 
         // Increase the score!
         this.score += timeDiff;
+        
+        if(this.score > this.pointsInLevel){
+            requestAnimationFrame(this.gameLoop)
+            console.log("Something Happened!" + this.pointsInLevel)
+            this.nextLevel();
+        }
 
         // Call update on all enemies
         this.enemies.forEach(enemy => enemy.update(timeDiff));
@@ -409,6 +452,8 @@ class Engine {
             this.ctx.fillStyle = '#000000';
             this.ctx.fillText(this.score, 5, 30);
             this.ctx.fillText("Lives: " + this.lives, 275, 30);
+            this.ctx.fillText(`Level ${this.currentLevel}`, 550, 30);
+            console.log(`Level ${this.currentLevel}`);
             
 
             // Set the time marker and redraw
