@@ -1,6 +1,42 @@
 
-.mainWindow .app body {
+body {
     align-content: center;
     justify-content: center;
     display:flex;
+    background-color: #272626;
+    background-image: url(/Users/ronanmacparland/Documents/decode11/oop-game-project/images/staff.png);
+    background-repeat: no-repeat;
+    background-position: center;
+    margin-top: 27px;
+
 }
+
+#app {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0px 0 103px 0;
+ }
+
+#btn {
+        background: #3498db;
+        background-image: -webkit-linear-gradient(top, #3498db, #2980b9);
+        background-image: -moz-linear-gradient(top, #3498db, #2980b9);
+        background-image: -ms-linear-gradient(top, #3498db, #2980b9);
+        background-image: -o-linear-gradient(top, #3498db, #2980b9);
+        background-image: linear-gradient(to bottom, #3498db, #2980b9);
+        -webkit-border-radius: 28;
+        -moz-border-radius: 28;
+        border-radius: 28px;
+        font-family: Georgia;
+        color: #f5f5f5;
+        font-size: 60px;
+        padding: 10px 28px 13px 28px;
+        text-decoration: none;
+        display:block;
+        position: absolute;
+    }
+
