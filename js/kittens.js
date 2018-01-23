@@ -4,10 +4,14 @@ var GAME_HEIGHT = 500;
 
 var ENEMY_WIDTH = 75;
 var ENEMY_HEIGHT = 100;
-var MAX_ENEMIES = 5;
+var MAX_ENEMIES = 3;
 
 var PLAYER_WIDTH = 75;
 var PLAYER_HEIGHT = 100;
+
+var COND_WIDTH = 75;
+var COND_HEIGHT = 100;
+var MAX_COND = 3;
 
 // These two constants keep us from using "magic numbers" in our code
 var LEFT_ARROW_CODE = 37;
@@ -26,7 +30,7 @@ var MOVE_RIGHT = 'right';
 
 // Preload game images
 var images = {};
-['note.png', 'canvasStaff.png', 'conductor.png'].forEach(imgName => {
+['note.png', 'canvasStaff.png', 'conductor.png', 'condiment.png'].forEach(imgName => {
     var img = document.createElement('img');
     img.src = 'images/' + imgName;
     images[imgName] = img;
@@ -50,27 +54,41 @@ var sounds = {};
 
 
 // This section is where you will be doing most of your coding
-class Enemy {
-    constructor(xPos) {
+class Entity {
+    render(ctx) {
+        ctx.drawImage(this.sprite, this.x, this.y);
+    }
+
+}
+
+class Enemy extends Entity{
+    constructor(xPos, score) {
+        super();
         this.x = GAME_WIDTH+ENEMY_WIDTH;
         this.y = xPos;
         this.sprite = images['note.png'];
+        this.score = score;
 
-        // Each enemy should have a different speed
-        this.speed = Math.random() / 2 + 0.25;
+         var modifier = (score > 25000) ? 1.9 : 1;
+         (score > 50000) ? 1.8: 1;
+         (score > 30000) ? 1.75: 1;
+         (score > 20000) ? 1.5: 1;
+         (score > 10000) ? 1.25: 1;
+         (score > 5000) ? 1 : 1;
+
+         // Each enemy should have a different speed
+         this.speed = (Math.random() / 3 + .15) * modifier;
+         console.log(this.speed)
     }
 
     update(timeDiff) {
         this.x = this.x - timeDiff * this.speed;
     }
-
-    render(ctx) {
-        ctx.drawImage(this.sprite, this.x, this.y);
-    }
 }
 
-class Player {
+class Player extends Entity {
     constructor() {
+        super();
         this.x = 0 ;
         this.y = (GAME_HEIGHT/2)+50;
         this.sprite = images['conductor.png'];
@@ -82,24 +100,41 @@ class Player {
         if (direction === MOVE_UP && this.y >= PLAYER_HEIGHT) {
             this.y = this.y - PLAYER_HEIGHT;
 
-        } else if (direction === MOVE_DOWN && this.y <= GAME_HEIGHT - PLAYER_HEIGHT) {
+        } else if (direction === MOVE_DOWN && this.y < GAME_HEIGHT - PLAYER_HEIGHT) {
             this.y = this.y + PLAYER_HEIGHT;
         }
 
-        // if (direction === MOVE_LEFT && this.x > 0) {
-        //     this.x = this.x - PLAYER_WIDTH;
-        // }
-        // else if (direction === MOVE_RIGHT && this.x < GAME_WIDTH - PLAYER_WIDTH) {
-        //     this.x = this.x + PLAYER_WIDTH;
-        // }
+        if (direction === MOVE_LEFT && this.x > 0) {
+            this.x = this.x - PLAYER_WIDTH;
+        }
+        else if (direction === MOVE_RIGHT && this.x < GAME_WIDTH - PLAYER_WIDTH) {
+            this.x = this.x + PLAYER_WIDTH;
+        }
     }
 
-    render(ctx) {
-        ctx.drawImage(this.sprite, this.x, this.y);
-    }
 }
 
+class Condiment extends Entity {
+    constructor(xPos, yPos) { //, score) {
+        super();
+        this.x = xPos;
+        this.y = yPos; //< GAME_HEIGHT - COND_HEIGHT) ? yPos : yPos - COND_HEIGHT;
+        this.sprite = images['condiment.png'];
+        // this.score = score
 
+        // var modifier = (score > 20000) ? 2 : 1;
+        // (score > 15000) ? 1.75 : 1;
+        // (score > 10000) ? 1.5 : 1;
+        // (score > 5000) ? 1.25 : 1;
+        // (score > 2000) ? 1 : 1;
+
+    }
+
+    //update(timeDiff) {
+    //    this.y = this.y + timeDiff * this.speed;
+    //}
+
+}
 
 
 
@@ -115,6 +150,7 @@ class Engine {
         this.currentLevel = 1;
         // Setup enemies, making sure there are always three
         this.setupEnemies();
+        this.setupCondiments();
 
         // Setup the <canvas> element where we will be drawing
         var canvas = document.createElement('canvas');
@@ -125,6 +161,8 @@ class Engine {
         this.ctx = canvas.getContext('2d');
         // Since gameLoop will be called out of context, bind it once here.
         this.gameLoop = this.gameLoop.bind(this);
+        this.shouldAddCondiments = false;
+        setTimeout(() => { this.shouldAddCondiments = true; }, 3000);
         
     }
 
@@ -142,9 +180,8 @@ class Engine {
         }
     }
 
-    // This method finds a random spot where there is no enemy, and puts one in there
     addEnemy() {
-        var enemySpots = (GAME_HEIGHT / ENEMY_HEIGHT) ;
+        var enemySpots = (GAME_HEIGHT / ENEMY_HEIGHT);
 
         var enemySpot;
         // Keep looping until we find a free enemy spot at random
@@ -152,9 +189,42 @@ class Engine {
             enemySpot = Math.floor(Math.random() * enemySpots);
         }
 
-        this.enemies[enemySpot] = new Enemy(enemySpot * ENEMY_HEIGHT);
-        
+        this.enemies[enemySpot] = new Enemy(enemySpot * ENEMY_HEIGHT, this.score);
+
     }
+
+    setupCondiments() {
+         if (!this.condiments) {
+             this.condiments = [];
+         }
+
+         while (this.condiments.filter(e => !!e).length < MAX_COND && this.shouldAddCondiments) {
+             this.addCondiments();
+         }
+     }
+
+         addCondiments() {
+             var xCondimentSpots = GAME_WIDTH / COND_WIDTH;
+             //console.log("xCondimentSpots" + xCondimentSpots)
+             var yCondimentSpots = Math.floor((GAME_HEIGHT - COND_HEIGHT) / COND_HEIGHT);
+             //console.log("yCondimentSpots" + yCondimentSpots)
+
+             var condimentSpot;
+             // Keep looping until we find a free enemy spot at random
+             while (condimentSpot === undefined || this.condiments[condimentSpot[0]]) {
+                 condimentSpot = [Math.floor(Math.random() * xCondimentSpots), Math.floor(Math.random() * yCondimentSpots)];
+             }
+
+             this.condiments[condimentSpot[0]] = new Condiment(condimentSpot[0] * COND_WIDTH, condimentSpot[1] * COND_HEIGHT); //, this.score);
+             this.shouldAddCondiments = false;
+             setTimeout(() => {
+                 this.shouldAddCondiments = true;
+             }, 3000);
+         }
+
+
+    // This method finds a random spot where there is no enemy, and puts one in there
+    
 
     pausedMusic(){
         sounds['paused.mp3'].play();
@@ -180,15 +250,16 @@ class Engine {
        };
     
     gameRestart() {
-        console.log("gameRestart function activated")
+        //console.log("gameRestart function activated")
         this.enemies = []
         this.player.y = (GAME_HEIGHT / 2) + 50;
         this.score = 0;
+        this.lives = 3;
         MAX_ENEMIES = 3;
         this.gameOverStop();
         this.startMusic();
         this.currentLevel = 1;
-        console.log("I have restarted music");
+        //console.log("I have restarted music");
        // this.isReset = !this.isReset;
         // this.start();
 
@@ -215,27 +286,28 @@ class Engine {
         this.isPaused = false;
         this.currentLevel = 1;
         this.score = 0;
+        this.lives = 3;
         this.lastFrame = Date.now();
         this.startMusic();
 
         // Listen for keyboard left/right and update the player
 
         document.addEventListener('keydown', e => {
-            console.log("keyboard", e.keyCode);
+           // console.log("keyboard", e.keyCode);
             if (e.keyCode === P_KEY_CODE){
-                console.log("Paused Key Pressed");
+                //console.log("Paused Key Pressed");
                 this.pauseMusic();
-                console.log("I have pause music")
+                //console.log("I have pause music")
                 this.gamePaused();
         
             };
                 
             
             if (e.keyCode === R_KEY_CODE) {
-                console.log("Restart Key Pressed");
+                //console.log("Restart Key Pressed");
                 this.gameRestart();
                 if (this.player.isDead) {
-                    console.log("Im dead");
+                   // console.log("Im dead");
                     this.player.isDead = false;
                     this.gameLoop();
                 }
@@ -299,6 +371,8 @@ class Engine {
         this.ctx.drawImage(images['canvasStaff.png'], 0, 0); // draw the star bg
         this.enemies.forEach(enemy => enemy.render(this.ctx)); // draw the enemies
         this.player.render(this.ctx); // draw the player
+        this.condiments.forEach(condiments => condiments.render(this.ctx));
+
 
         // Check if any enemies should die
         this.enemies.forEach((enemy, enemyIdx) => {
@@ -308,13 +382,24 @@ class Engine {
         });
         this.setupEnemies();
 
+        if (this.isCondimentsCollided()) {
+            this.score = this.score + 2000;
+            this.condiments.forEach((condiment, Idx) => {
+                if (condiment.shouldRemove) {
+                    delete this.condiments[Idx];
+                }
+            });
+
+        }
+        this.setupCondiments();
+
         // Check if player is dead
         if (this.isPlayerDead()) {
             // If they are dead, then it's game over!
             this.ctx.font = 'bold 30px Impact';
             this.ctx.fillStyle = '#000000';
-            this.ctx.fillText(this.score + ' GAME OVER', 5, 30)
-            console.log("I'm playing funeral music");
+            this.ctx.fillText(this.score + ' GAME OVER', 250, 250)
+            //console.log("I'm playing funeral music");
             this.pauseMusic();
             this.gameOver();
         }
@@ -323,6 +408,8 @@ class Engine {
             this.ctx.font = 'bold 30px Impact';
             this.ctx.fillStyle = '#000000';
             this.ctx.fillText(this.score, 5, 30);
+            this.ctx.fillText("Lives: " + this.lives, 275, 30);
+            
 
             // Set the time marker and redraw
             this.lastFrame = Date.now();
@@ -331,19 +418,53 @@ class Engine {
     }
     }
 
-    
-    isPlayerDead() {
-        
-        var enemyHit = (enemy) => { 
+    isCondimentsCollided() {
+        //logic to see if this.condiment - collided
 
-            if (enemy.x < 75 && this.player.y === enemy.y)  
-             {
-               console.log("enemy hit");
-               sounds["hit.mp3"].currentTime = 0;
-               sounds["hit.mp3"].play();
-               this.player.isDead = true;
+        var amIcondiment = (condiment) => {
+            if ((this.player.x === condiment.x) && (this.player.y <= condiment.y + COND_HEIGHT) &&
+                (this.player.y >= condiment.y)) {
+                sounds["levelEnd.mp3"].currentTime = 0;
+                sounds["levelEnd.mp3"].play();
+                condiment.shouldRemove = true;
                 return true;
             }
+        }
+
+        return this.condiments.some(amIcondiment);
+
+
+
+    }
+
+    isPlayerDead() {
+        
+        var enemyHit = (enemy, enemyIdx) => { 
+            //console.log("player y:" + this.player.y)
+            //console.log("player x:" + this.player.x) 
+            //console.log("enemy x:" + enemy.x)
+            
+        
+            if (
+                enemy.y === this.player.y &&
+                enemy.x <= this.player.x + 70 &&
+                enemy.x > this.player.x - 70
+
+            )    { 
+
+                console.log("enemy hit");
+                sounds["hit.mp3"].currentTime = 0;
+                sounds["hit.mp3"].play();
+
+                if(this.lives > 0){
+                    delete this.enemies[enemyIdx]
+                    this.lives--;
+                    return false
+                }
+                else {
+               this.player.isDead = true;
+                return true;
+            }}
         };
 
         return this.enemies.some(enemyHit);
@@ -363,7 +484,7 @@ var gameEngine = new Engine(document.getElementById('app'));
 
 // This starts the game when you click start
 var gameStart = (onclick) => {
-    console.log("game has been started") 
+    //console.log("game has been started") 
     var x = document.getElementById("btn");
     if (x.style.display === "none") {
         x.style.display = "block";
